@@ -80,9 +80,20 @@ const taskService = {
     return tasks.filter(task => task.priority === priority);
   },
 
-  async getTasksByCategory(category) {
+async getTasksByCategory(category) {
     await delay(200);
     return tasks.filter(task => task.category === category);
+  },
+
+  async getTasksForDateRange(startDate, endDate) {
+    await delay(200);
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    return tasks.filter(task => {
+      if (!task.dueDate) return false;
+      const taskDate = new Date(task.dueDate);
+      return taskDate >= start && taskDate <= end;
+    });
   }
 };
 
