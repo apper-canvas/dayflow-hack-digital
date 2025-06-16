@@ -140,7 +140,11 @@ const TaskList = ({ onTaskUpdate, refreshTrigger }) => {
     }
   };
 
-  const filteredTasks = tasks.filter(task => {
+const filteredTasks = tasks.filter(task => {
+    // Exclude completed tasks from dashboard
+    if (task.completed) return false;
+    
+    // Apply category filter
     if (selectedCategories.length === 0) return true;
     return selectedCategories.includes(task.category);
   });
