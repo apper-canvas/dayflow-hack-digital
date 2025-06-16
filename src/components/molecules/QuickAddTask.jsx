@@ -10,10 +10,11 @@ const QuickAddTask = ({ onTaskAdded, className = '' }) => {
   const [title, setTitle] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
   const [priority, setPriority] = useState('medium');
-  const [category, setCategory] = useState('work');
+const [category, setCategory] = useState('work');
   const [dueDate, setDueDate] = useState('');
+  const [assignedEmails, setAssignedEmails] = useState([]);
+  const [emailInput, setEmailInput] = useState('');
   const [loading, setLoading] = useState(false);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!title.trim()) return;
@@ -32,18 +33,25 @@ const QuickAddTask = ({ onTaskAdded, className = '' }) => {
         parsedDueDate = new Date(parsedDueDate).toISOString();
       }
 
-      const newTask = await taskService.create({
+const newTask = await taskService.create({
         title: title.trim(),
         priority,
         category,
-        dueDate: parsedDueDate || null
+        dueDate: parsedDueDate || null,
+        assignedUsers: assignedEmails
       });
 
       setTitle('');
       setDueDate('');
+      setAssignedEmails([]);
+      setEmailInput('');
       setIsExpanded(false);
       onTaskAdded?.(newTask);
-      toast.success('Task added successfully!');
+      
+      const successMessage = assignedEmails.length > 0 
+        ? `Task added and assigned to ${assignedEmails.length} user(s)!`
+        : 'Task added successfully!';
+      toast.success(successMessage);
     } catch (error) {
       toast.error('Failed to add task');
     } finally {
@@ -56,11 +64,12 @@ const QuickAddTask = ({ onTaskAdded, className = '' }) => {
     
     setLoading(true);
     try {
-      const newTask = await taskService.create({
+const newTask = await taskService.create({
         title: title.trim(),
         priority: 'medium',
         category: 'work',
-        dueDate: null
+        dueDate: null,
+        assignedUsers: []
       });
 
       setTitle('');
@@ -71,8 +80,38 @@ const QuickAddTask = ({ onTaskAdded, className = '' }) => {
     } finally {
       setLoading(false);
     }
+};
+
+  const handleAddEmail = () => {
+    if (!emailInput.trim()) return;
+    
+    const email = emailInput.trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    
+    if (!emailRegex.test(email)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+    
+    if (assignedEmails.includes(email)) {
+      toast.warning('Email already added');
+      return;
+    }
+    
+    setAssignedEmails(prev => [...prev, email]);
+    setEmailInput('');
   };
 
+  const handleRemoveEmail = (emailToRemove) => {
+    setAssignedEmails(prev => prev.filter(email => email !== emailToRemove));
+  };
+
+  const handleEmailKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddEmail();
+    }
+  };
   return (
     <motion.div
       className={`bg-white rounded-xl shadow-sm border border-gray-100 p-4 ${className}`}
@@ -166,20 +205,70 @@ const QuickAddTask = ({ onTaskAdded, className = '' }) => {
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
                   disabled={loading}
                 />
+/>
+              </div>
+
+              <div className="md:col-span-3">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Assign to Users (Email)
+                </label>
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <input
+                      type="email"
+                      value={emailInput}
+                      onChange={(e) => setEmailInput(e.target.value)}
+                      onKeyPress={handleEmailKeyPress}
+                      placeholder="Enter email address..."
+                      className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                      disabled={loading}
+                    />
+                    <Button
+                      type="button"
+                      onClick={handleAddEmail}
+                      disabled={!emailInput.trim() || loading}
+                      icon="Plus"
+                      size="sm"
+                      className="px-3"
+                    />
+                  </div>
+                  
+                  {assignedEmails.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {assignedEmails.map((email, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center gap-1 bg-primary/10 text-primary px-2 py-1 rounded-md text-sm"
+                        >
+                          <span>{email}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveEmail(email)}
+                            className="hover:text-error ml-1"
+                            disabled={loading}
+                          >
+                            <ApperIcon name="X" size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
         </motion.div>
-
         {isExpanded && (
           <div className="flex justify-end gap-2">
             <Button
               type="button"
               variant="ghost"
-              onClick={() => {
+onClick={() => {
                 setIsExpanded(false);
                 setTitle('');
                 setDueDate('');
+                setAssignedEmails([]);
+                setEmailInput('');
               }}
               disabled={loading}
             >

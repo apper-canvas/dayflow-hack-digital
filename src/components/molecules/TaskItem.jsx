@@ -195,10 +195,35 @@ const TaskItem = ({ task, onUpdate, onDelete, className = '' }) => {
                   </Badge>
                 )}
                 
-                {task.dueDate && (
+{task.dueDate && (
                   <div className={`text-sm ${getDueDateStyle(task.dueDate)} flex items-center`}>
                     <ApperIcon name="Clock" size={14} className="mr-1" />
                     {formatDueDate(task.dueDate)}
+                  </div>
+                )}
+                
+                {task.assignedUsers && task.assignedUsers.length > 0 && (
+                  <div className="flex items-center gap-1 mt-2">
+                    <ApperIcon name="Users" size={14} className="text-gray-400" />
+                    <div className="flex items-center gap-1">
+                      {task.assignedUsers.slice(0, 3).map((email, index) => (
+                        <div
+                          key={index}
+                          className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center text-xs font-medium text-primary"
+                          title={email}
+                        >
+                          {email.charAt(0).toUpperCase()}
+                        </div>
+                      ))}
+                      {task.assignedUsers.length > 3 && (
+                        <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center text-xs text-gray-500">
+                          +{task.assignedUsers.length - 3}
+                        </div>
+                      )}
+                      <span className="text-xs text-gray-500 ml-1">
+                        {task.assignedUsers.length} assigned
+                      </span>
+                    </div>
                   </div>
                 )}
               </div>
